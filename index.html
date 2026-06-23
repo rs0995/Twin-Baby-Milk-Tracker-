@@ -17,38 +17,47 @@
   --brand-deep:#B8456A;
   --p1:#EC6F91;       /* Twin A accent - rose pink */
   --p1-deep:#C24768;
+  --p1-light:#FFD9E4;
   --p2:#8C7FC2;        /* Twin B accent - soft lavender */
   --p2-deep:#675999;
+  --p2-light:#DCD6F0;
   --danger:#D9637A;
 }
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;}
+html,body{margin:0;padding:0; height:100%;}
 
 #hydration-app{
   font-family:'Inter',sans-serif;
   color:var(--ink);
   background:var(--bg);
-  min-height:100vh;
+  height:100dvh;
+  height:100vh;
   max-width:430px;
   margin:0 auto;
-  padding:env(safe-area-inset-top,18px) 0 calc(env(safe-area-inset-bottom,18px) + 16px);
+  padding:env(safe-area-inset-top,18px) 0 calc(env(safe-area-inset-bottom,18px) + 12px);
   position:relative;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
 
-.h-title, .segment, .dots{
+.h-title, .segment{
   padding-left:16px;
   padding-right:16px;
+  flex-shrink:0;
 }
 
-/* Dot slider nav */
+/* Vertical dot slider nav, pinned to the right edge */
 .dots{
+  position:absolute;
+  right:7px;
+  top:50%;
+  transform:translateY(-50%);
   display:flex;
-  justify-content:center;
+  flex-direction:column;
   gap:8px;
-  margin-bottom:14px;
+  z-index:5;
 }
 .dot-btn{
   border:none;
@@ -57,28 +66,34 @@ html,body{margin:0;padding:0;}
   border-radius:50%;
   padding:0;
   cursor:pointer;
-  transition:background .2s, width .2s;
+  transition:background .2s, height .2s;
 }
 .dot-btn.active{
   background:var(--brand);
-  width:22px;
+  height:22px;
+  width:8px;
   border-radius:5px;
 }
 
-/* Swipeable pager */
+/* Swipeable vertical pager */
 .pager{
   display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
+  flex-direction:column;
+  overflow-y:auto;
+  overflow-x:hidden;
+  scroll-snap-type:y mandatory;
   -webkit-overflow-scrolling:touch;
   scrollbar-width:none;
+  flex:1 1 auto;
 }
 .pager::-webkit-scrollbar{display:none;}
 .page{
-  flex:0 0 100%;
+  flex:0 0 auto;
   scroll-snap-align:start;
-  padding:0 16px;
-  min-width:0;
+  scroll-snap-stop:always;
+  padding:14px 28px 28px 16px;
+  min-height:100%;
+  box-sizing:border-box;
 }
 .page-title{
   font-family:'Outfit',sans-serif;
@@ -147,6 +162,13 @@ html,body{margin:0;padding:0;}
 }
 .glass-card.active{opacity:1; transform:scale(1);}
 
+.glass-name-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  margin-bottom:10px;
+}
 .glass-name{
   font-size:13px;
   font-weight:600;
@@ -155,12 +177,22 @@ html,body{margin:0;padding:0;}
   align-items:center;
   gap:4px;
   cursor:pointer;
-  margin-bottom:10px;
 }
 .glass-name .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
 .glass-card.p1 .glass-name .dot{background:var(--p1);}
 .glass-card.p2 .glass-name .dot{background:var(--p2);}
 .glass-name svg{width:11px;height:11px;opacity:.5;}
+
+.color-dot{
+  width:14px; height:14px;
+  border-radius:50%;
+  border:1.5px solid rgba(83,44,59,0.12);
+  padding:0;
+  cursor:pointer;
+  flex-shrink:0;
+}
+.glass-card.p1 .color-dot{background:var(--p1);}
+.glass-card.p2 .color-dot{background:var(--p2);}
 
 /* bottle shape: neck + body */
 .bottle-wrap{position:relative; width:54px; height:96px; margin-bottom:10px;}
@@ -194,8 +226,8 @@ html,body{margin:0;padding:0;}
   height:0%;
   transition:height .5s cubic-bezier(.3,.9,.4,1);
 }
-.glass-card.p1 .glass-fill{background:linear-gradient(180deg,#FFD9E4,var(--p1));}
-.glass-card.p2 .glass-fill{background:linear-gradient(180deg,#DCD6F0,var(--p2));}
+.glass-card.p1 .glass-fill{background:linear-gradient(180deg,var(--p1-light),var(--p1));}
+.glass-card.p2 .glass-fill{background:linear-gradient(180deg,var(--p2-light),var(--p2));}
 .glass-fill::before{
   content:'';
   position:absolute;
@@ -374,6 +406,32 @@ html,body{margin:0;padding:0;}
 .sheet-actions .save{background:var(--brand); color:#fff;}
 .sheet-actions .cancel{background:#FBEEF2; color:var(--ink-soft);}
 .sheet-actions .delete{background:#FBE3E8; color:var(--danger);}
+
+.swatch-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+  margin-bottom:18px;
+}
+.swatch{
+  width:100%;
+  aspect-ratio:1;
+  border-radius:16px;
+  border:3px solid transparent;
+  cursor:pointer;
+  position:relative;
+}
+.swatch.active{border-color:var(--ink);}
+.swatch.active::after{
+  content:'✓';
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  color:#fff;
+  font-size:18px;
+  font-weight:700;
+  text-shadow:0 1px 2px rgba(0,0,0,0.25);
+}
 
 .sync-note{
   text-align:center;
@@ -577,6 +635,17 @@ html,body{margin:0;padding:0;}
   </div>
 </div>
 
+<div class="sheet-overlay" id="colorSheetOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="colorSheetTitle">Choose a colour</h3>
+    <div class="swatch-grid" id="swatchGrid"></div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelColor">Close</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function(){
   const EDIT_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
@@ -588,9 +657,20 @@ html,body{margin:0;padding:0;}
   let avgIntervalHours = 2;
   let selectedDate = null; // set on first render to today
 
+  const THEME_COLORS = {
+    pink:     {base:'#EC6F91', deep:'#C24768', light:'#FFD9E4'},
+    blue:     {base:'#4FA3D9', deep:'#2C7AB0', light:'#CFE9F7'},
+    green:    {base:'#5CB389', deep:'#357A5C', light:'#D3EEE0'},
+    yellow:   {base:'#E0B23E', deep:'#A9802A', light:'#FBEAC4'},
+    peach:    {base:'#F2A679', deep:'#C97B4E', light:'#FCE0CC'},
+    lavender: {base:'#8C7FC2', deep:'#675999', light:'#DCD6F0'}
+  };
+  let colorEditingPerson = null;
+
   let state = {
     names: {p1:'Twin A', p2:'Twin B'},
     goals: {p1:700, p2:700},
+    colors: {p1:'pink', p2:'lavender'},
     entries: [],
     active: 'p1'
   };
@@ -635,10 +715,17 @@ html,body{margin:0;padding:0;}
       if(data && data.entries) state.entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
       if(data && data.names) state.names = data.names;
       if(data && data.goals) state.goals = {p1:Number(data.goals.p1)||700, p2:Number(data.goals.p2)||700};
+      if(data && data.colors){
+        state.colors = {
+          p1: THEME_COLORS[data.colors.p1] ? data.colors.p1 : state.colors.p1,
+          p2: THEME_COLORS[data.colors.p2] ? data.colors.p2 : state.colors.p2
+        };
+      }
       setSyncStatus('synced');
     }catch(err){
       setSyncStatus('offline — showing last known data');
     }
+    applyColors();
     render();
   }
 
@@ -672,6 +759,19 @@ html,body{margin:0;padding:0;}
   async function apiSetGoal(person, goal){
     try{ await apiPost({action:'setGoal', person, goal}); }catch(e){}
   }
+  async function apiSetColor(person, color){
+    try{ await apiPost({action:'setColor', person, color}); }catch(e){}
+  }
+
+  function applyColors(){
+    const root = document.getElementById('hydration-app');
+    ['p1','p2'].forEach(p=>{
+      const c = THEME_COLORS[state.colors[p]] || THEME_COLORS.pink;
+      root.style.setProperty('--'+p, c.base);
+      root.style.setProperty('--'+p+'-deep', c.deep);
+      root.style.setProperty('--'+p+'-light', c.light);
+    });
+  }
 
   function todayEntries(){
     const t = todayStr();
@@ -700,7 +800,10 @@ html,body{margin:0;padding:0;}
       const pct = Math.max(0, Math.min(100, Math.round((total/goal)*100)));
       return `
         <div class="glass-card ${p} ${state.active===p?'active':''}" data-p="${p}">
-          <div class="glass-name" data-rename="${p}">${escapeHtml(state.names[p])} ${PENCIL_SVG}</div>
+          <div class="glass-name-row">
+            <span class="glass-name" data-rename="${p}">${escapeHtml(state.names[p])} ${PENCIL_SVG}</span>
+            <button class="color-dot" data-color-btn="${p}" aria-label="Choose colour"></button>
+          </div>
           <div class="bottle-wrap">
             <div class="bottle-cap"></div>
             <div class="bottle-neck"></div>
@@ -713,7 +816,7 @@ html,body{margin:0;padding:0;}
 
     wrap.querySelectorAll('.glass-card').forEach(c=>{
       c.addEventListener('click', (ev)=>{
-        if(ev.target.closest('[data-rename]')) return;
+        if(ev.target.closest('[data-rename]') || ev.target.closest('[data-color-btn]')) return;
         state.active = c.dataset.p; render();
       });
     });
@@ -723,6 +826,12 @@ html,body{margin:0;padding:0;}
         const p = el.dataset.rename;
         const val = prompt('Rename', state.names[p]);
         if(val && val.trim()){ state.names[p] = val.trim().slice(0,20); apiSetName(p, state.names[p]); render(); }
+      });
+    });
+    wrap.querySelectorAll('[data-color-btn]').forEach(el=>{
+      el.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        openColorSheet(el.dataset.colorBtn);
       });
     });
   }
@@ -906,6 +1015,39 @@ html,body{margin:0;padding:0;}
     editingId = null;
   }
 
+  function openColorSheet(p){
+    colorEditingPerson = p;
+    document.getElementById('colorSheetTitle').textContent = 'Colour for ' + state.names[p];
+    renderSwatchGrid(p);
+    document.getElementById('colorSheetOverlay').classList.add('show');
+  }
+  function closeColorSheet(){
+    document.getElementById('colorSheetOverlay').classList.remove('show');
+    colorEditingPerson = null;
+  }
+  function renderSwatchGrid(p){
+    const grid = document.getElementById('swatchGrid');
+    grid.innerHTML = Object.keys(THEME_COLORS).map(key=>{
+      const c = THEME_COLORS[key];
+      const active = state.colors[p] === key;
+      return `<button class="swatch ${active?'active':''}" data-color="${key}" style="background:${c.base}" aria-label="${key}"></button>`;
+    }).join('');
+    grid.querySelectorAll('.swatch').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const color = btn.dataset.color;
+        state.colors[colorEditingPerson] = color;
+        applyColors();
+        apiSetColor(colorEditingPerson, color);
+        closeColorSheet();
+        render();
+      });
+    });
+  }
+  document.getElementById('cancelColor').addEventListener('click', closeColorSheet);
+  document.getElementById('colorSheetOverlay').addEventListener('click', (ev)=>{
+    if(ev.target.id === 'colorSheetOverlay') closeColorSheet();
+  });
+
   document.getElementById('cancelEdit').addEventListener('click', closeSheet);
   document.getElementById('sheetOverlay').addEventListener('click', (ev)=>{
     if(ev.target.id === 'sheetOverlay') closeSheet();
@@ -941,14 +1083,14 @@ html,body{margin:0;padding:0;}
     dots.forEach(d=>{
       d.addEventListener('click', ()=>{
         const i = parseInt(d.dataset.i,10);
-        pager.scrollTo({left: i*pager.clientWidth, behavior:'smooth'});
+        pager.scrollTo({top: i*pager.clientHeight, behavior:'smooth'});
       });
     });
     let scrollTimeout;
     pager.addEventListener('scroll', ()=>{
       clearTimeout(scrollTimeout);
       scrollTimeout = setTimeout(()=>{
-        const i = Math.round(pager.scrollLeft / pager.clientWidth);
+        const i = Math.round(pager.scrollTop / pager.clientHeight);
         dots.forEach((d,idx)=> d.classList.toggle('active', idx===i));
       }, 50);
     });
