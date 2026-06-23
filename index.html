@@ -32,8 +32,60 @@ html,body{margin:0;padding:0;}
   min-height:100vh;
   max-width:430px;
   margin:0 auto;
-  padding:env(safe-area-inset-top,18px) 16px calc(env(safe-area-inset-bottom,18px) + 16px);
+  padding:env(safe-area-inset-top,18px) 0 calc(env(safe-area-inset-bottom,18px) + 16px);
   position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+.h-title, .segment, .dots{
+  padding-left:16px;
+  padding-right:16px;
+}
+
+/* Dot slider nav */
+.dots{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:14px;
+}
+.dot-btn{
+  border:none;
+  background:var(--line);
+  width:8px; height:8px;
+  border-radius:50%;
+  padding:0;
+  cursor:pointer;
+  transition:background .2s, width .2s;
+}
+.dot-btn.active{
+  background:var(--brand);
+  width:22px;
+  border-radius:5px;
+}
+
+/* Swipeable pager */
+.pager{
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.pager::-webkit-scrollbar{display:none;}
+.page{
+  flex:0 0 100%;
+  scroll-snap-align:start;
+  padding:0 16px;
+  min-width:0;
+}
+.page-title{
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
+  font-size:15px;
+  color:var(--ink-soft);
+  margin:0 2px 12px;
 }
 
 .h-title{
@@ -459,33 +511,50 @@ html,body{margin:0;padding:0;}
 
   <div class="segment" id="segment"></div>
 
-  <div class="glasses" id="glasses"></div>
-
-  <div class="section-label" id="quickLabel">Quick add</div>
-  <div class="quickgrid" id="quickgrid"></div>
-
-  <div class="customrow">
-    <input type="number" id="customAmount" placeholder="Custom amount (ml)" inputmode="numeric" min="1">
-    <button id="customAddBtn">Add</button>
+  <div class="dots" id="dots">
+    <button class="dot-btn active" data-i="0" aria-label="Log"></button>
+    <button class="dot-btn" data-i="1" aria-label="Averages"></button>
+    <button class="dot-btn" data-i="2" aria-label="History"></button>
   </div>
 
-  <div class="section-label">Today's feeds</div>
-  <div class="log-list" id="logList"></div>
+  <div class="pager" id="pager">
+    <section class="page">
+      <h2 class="page-title">Log a feed</h2>
+      <div class="glasses" id="glasses"></div>
 
-  <div class="interval-row">
-    <div class="section-label">Average intake per</div>
-    <div class="interval-pills" id="intervalPills"></div>
+      <div class="section-label" id="quickLabel">Quick add</div>
+      <div class="quickgrid" id="quickgrid"></div>
+
+      <div class="customrow">
+        <input type="number" id="customAmount" placeholder="Custom amount (ml)" inputmode="numeric" min="1">
+        <button id="customAddBtn">Add</button>
+      </div>
+
+      <div class="section-label">Today's feeds</div>
+      <div class="log-list" id="logList"></div>
+
+      <div class="sync-note">Shared log — visible to both parents on this device's storage.</div>
+    </section>
+
+    <section class="page">
+      <h2 class="page-title">Averages</h2>
+      <div class="interval-row">
+        <div class="section-label">Average intake per</div>
+        <div class="interval-pills" id="intervalPills"></div>
+      </div>
+      <div class="avg-card" id="avgCard"></div>
+    </section>
+
+    <section class="page">
+      <h2 class="page-title">History</h2>
+      <div class="interval-row">
+        <div class="section-label">Daily intake</div>
+        <select class="date-select" id="dateSelect"></select>
+      </div>
+      <div class="pattern-note" id="patternNote"></div>
+      <div class="pattern-grid" id="patternGrid"></div>
+    </section>
   </div>
-  <div class="avg-card" id="avgCard"></div>
-
-  <div class="interval-row">
-    <div class="section-label">Daily intake</div>
-    <select class="date-select" id="dateSelect"></select>
-  </div>
-  <div class="pattern-note" id="patternNote"></div>
-  <div class="pattern-grid" id="patternGrid"></div>
-
-  <div class="sync-note">Shared log — visible to both parents on this device's storage.</div>
 </div>
 
 <div class="sheet-overlay" id="sheetOverlay">
@@ -866,6 +935,25 @@ html,body{margin:0;padding:0;}
     if(ev.key==='Enter'){ document.getElementById('customAddBtn').click(); }
   });
 
+  function setupPager(){
+    const pager = document.getElementById('pager');
+    const dots = Array.from(document.querySelectorAll('.dot-btn'));
+    dots.forEach(d=>{
+      d.addEventListener('click', ()=>{
+        const i = parseInt(d.dataset.i,10);
+        pager.scrollTo({left: i*pager.clientWidth, behavior:'smooth'});
+      });
+    });
+    let scrollTimeout;
+    pager.addEventListener('scroll', ()=>{
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(()=>{
+        const i = Math.round(pager.scrollLeft / pager.clientWidth);
+        dots.forEach((d,idx)=> d.classList.toggle('active', idx===i));
+      }, 50);
+    });
+  }
+
   function render(){
     renderSegment();
     renderGlasses();
@@ -877,6 +965,7 @@ html,body{margin:0;padding:0;}
     renderPatterns();
   }
 
+  setupPager();
   loadAll();
 })();
 </script>
