@@ -693,8 +693,14 @@ html,body{margin:0;padding:0; height:100%;}
 
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbwF9IWJ5FR-qeDw2TjUQB1x9dlWnNZxXWyy8wixWcf8XZ-5OXG-__1cWjyFQjeVbt0/exec';
 
+  // Track local writes that are mid-flight so a periodic refresh can't
+  // wipe them out before the server has actually processed them.
+  const pendingAdds = new Map();   // id -> entry
+  const pendingEdits = new Map();  // id -> {amount, time}
+  const pendingDeletes = new Set(); // ids
+
   async function apiList(){
-    const res = await fetch(GAS_URL+'?action=list');
+    const res = await fetch(GAS_URL+'?action=list&t='+Date.now(), {cache:'no-store'});
     if(!res.ok) throw new Error('list failed');
     return res.json();
   }
@@ -702,7 +708,8 @@ html,body{margin:0;padding:0; height:100%;}
     const res = await fetch(GAS_URL, {
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      cache:'no-store'
     });
     if(!res.ok) throw new Error('post failed');
     return res.json();
@@ -712,7 +719,17 @@ html,body{margin:0;padding:0; height:100%;}
     setSyncStatus('syncing…');
     try{
       const data = await apiList();
-      if(data && data.entries) state.entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
+      if(data && data.entries){
+        let entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
+        // Re-apply any in-flight edits/deletes/adds so they don't flicker
+        // away while their request is still on the wire.
+        entries = entries.filter(e=> !pendingDeletes.has(e.id));
+        entries = entries.map(e=> pendingEdits.has(e.id) ? {...e, ...pendingEdits.get(e.id)} : e);
+        pendingAdds.forEach((entry, id)=>{
+          if(!entries.find(e=>e.id===id)) entries.push(entry);
+        });
+        state.entries = entries;
+      }
       if(data && data.names) state.names = data.names;
       if(data && data.goals) state.goals = {p1:Number(data.goals.p1)||700, p2:Number(data.goals.p2)||700};
       if(data && data.colors){
@@ -733,25 +750,43 @@ html,body{margin:0;padding:0; height:100%;}
   setInterval(()=>{ loadAll(); }, 20000);
 
   async function apiAddEntry(entry){
+    pendingAdds.set(entry.id, entry);
     try{
       setSyncStatus('saving…');
       await apiPost({action:'add', entry});
       setSyncStatus('synced');
-    }catch(e){ setSyncStatus('save failed — check connection'); }
+    }catch(e){
+      setSyncStatus('save failed — check connection');
+    }finally{
+      pendingAdds.delete(entry.id);
+      loadAll();
+    }
   }
   async function apiEditEntry(id, amount, time){
+    pendingEdits.set(id, {amount, time});
     try{
       setSyncStatus('saving…');
       await apiPost({action:'edit', id, amount, time});
       setSyncStatus('synced');
-    }catch(e){ setSyncStatus('save failed — check connection'); }
+    }catch(e){
+      setSyncStatus('save failed — check connection');
+    }finally{
+      pendingEdits.delete(id);
+      loadAll();
+    }
   }
   async function apiDeleteEntry(id){
+    pendingDeletes.add(id);
     try{
       setSyncStatus('saving…');
       await apiPost({action:'delete', id});
       setSyncStatus('synced');
-    }catch(e){ setSyncStatus('save failed — check connection'); }
+    }catch(e){
+      setSyncStatus('save failed — check connection');
+    }finally{
+      pendingDeletes.delete(id);
+      loadAll();
+    }
   }
   async function apiSetName(person, name){
     try{ await apiPost({action:'setName', person, name}); }catch(e){}
