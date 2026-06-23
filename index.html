@@ -691,7 +691,7 @@ html,body{margin:0;padding:0; height:100%;}
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbwF9IWJ5FR-qeDw2TjUQB1x9dlWnNZxXWyy8wixWcf8XZ-5OXG-__1cWjyFQjeVbt0/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxP5fJQ1XE70xHJfhVAARqVU6drHLeVjdiB47GxtUTu9bB3kCfnaDwHGSypHvcfummI/exec';
 
   // Track local writes that are mid-flight so a periodic refresh can't
   // wipe them out before the server has actually processed them.
@@ -699,26 +699,36 @@ html,body{margin:0;padding:0; height:100%;}
   const pendingEdits = new Map();  // id -> {amount, time}
   const pendingDeletes = new Set(); // ids
 
-  async function apiList(){
-    const res = await fetch(GAS_URL+'?action=list&t='+Date.now(), {cache:'no-store'});
-    if(!res.ok) throw new Error('list failed');
-    return res.json();
-  }
-  async function apiPost(payload){
-    const res = await fetch(GAS_URL, {
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(payload),
-      cache:'no-store'
+  // JSONP request — bypasses CORS entirely (a <script> tag isn't subject
+  // to the same-origin policy the way fetch()/XHR are).
+  function jsonpRequest(params){
+    return new Promise((resolve, reject)=>{
+      const cbName = 'jsonp_cb_' + Date.now() + '_' + Math.floor(Math.random()*1e6);
+      const qs = new URLSearchParams({...params, callback:cbName, t:Date.now()}).toString();
+      const script = document.createElement('script');
+      let timeoutId;
+      const cleanup = ()=>{
+        clearTimeout(timeoutId);
+        delete window[cbName];
+        script.remove();
+      };
+      window[cbName] = (data)=>{ cleanup(); resolve(data); };
+      script.onerror = ()=>{ cleanup(); reject(new Error('script load error')); };
+      timeoutId = setTimeout(()=>{ cleanup(); reject(new Error('timeout')); }, 12000);
+      script.src = GAS_URL + '?' + qs;
+      document.body.appendChild(script);
     });
-    if(!res.ok) throw new Error('post failed');
-    return res.json();
+  }
+
+  async function apiList(){
+    return jsonpRequest({action:'list'});
   }
 
   async function loadAll(){
     setSyncStatus('syncing…');
     try{
       const data = await apiList();
+      if(data && data.error) throw new Error(data.error);
       if(data && data.entries){
         let entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
         // Re-apply any in-flight edits/deletes/adds so they don't flicker
@@ -753,7 +763,7 @@ html,body{margin:0;padding:0; height:100%;}
     pendingAdds.set(entry.id, entry);
     try{
       setSyncStatus('saving…');
-      await apiPost({action:'add', entry});
+      await jsonpRequest({action:'add', id:entry.id, person:entry.person, amount:entry.amount, date:entry.date, time:entry.time});
       setSyncStatus('synced');
     }catch(e){
       setSyncStatus('save failed — check connection');
@@ -766,7 +776,7 @@ html,body{margin:0;padding:0; height:100%;}
     pendingEdits.set(id, {amount, time});
     try{
       setSyncStatus('saving…');
-      await apiPost({action:'edit', id, amount, time});
+      await jsonpRequest({action:'edit', id, amount, time});
       setSyncStatus('synced');
     }catch(e){
       setSyncStatus('save failed — check connection');
@@ -779,7 +789,7 @@ html,body{margin:0;padding:0; height:100%;}
     pendingDeletes.add(id);
     try{
       setSyncStatus('saving…');
-      await apiPost({action:'delete', id});
+      await jsonpRequest({action:'delete', id});
       setSyncStatus('synced');
     }catch(e){
       setSyncStatus('save failed — check connection');
@@ -789,13 +799,13 @@ html,body{margin:0;padding:0; height:100%;}
     }
   }
   async function apiSetName(person, name){
-    try{ await apiPost({action:'setName', person, name}); }catch(e){}
+    try{ await jsonpRequest({action:'setName', person, name}); }catch(e){}
   }
   async function apiSetGoal(person, goal){
-    try{ await apiPost({action:'setGoal', person, goal}); }catch(e){}
+    try{ await jsonpRequest({action:'setGoal', person, goal}); }catch(e){}
   }
   async function apiSetColor(person, color){
-    try{ await apiPost({action:'setColor', person, color}); }catch(e){}
+    try{ await jsonpRequest({action:'setColor', person, color}); }catch(e){}
   }
 
   function applyColors(){
