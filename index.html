@@ -683,6 +683,23 @@ html,body{margin:0;padding:0; height:100%;}
     const d = new Date();
     return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   }
+  // Google Sheets sometimes auto-converts a typed "2026-06-23" / "14:30"
+  // string into a real date/time value, which comes back from the API
+  // as a full ISO timestamp instead of the plain string we expect.
+  // These guard against that so "today" matching never silently breaks.
+  function normalizeDateStr(val){
+    if(typeof val !== 'string') return val;
+    if(val.includes('T')) return val.slice(0,10);
+    return val;
+  }
+  function normalizeTimeStr(val){
+    if(typeof val !== 'string') return val;
+    if(val.includes('T')){
+      const match = val.match(/T(\d{2}):(\d{2})/);
+      if(match) return match[1]+':'+match[2];
+    }
+    return val;
+  }
   function setSyncStatus(text){
     const el = document.getElementById('syncStatus');
     if(el) el.textContent = text;
@@ -691,7 +708,7 @@ html,body{margin:0;padding:0; height:100%;}
     return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxP5fJQ1XE70xHJfhVAARqVU6drHLeVjdiB47GxtUTu9bB3kCfnaDwHGSypHvcfummI/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxsBsg3tvi1EuB_QDWWppB9Im-NECoYfNyQ2zXGNbhUjhmjJz--rDHX9u0NshZCdRv3/exec';
 
   // Track local writes that are mid-flight so a periodic refresh can't
   // wipe them out before the server has actually processed them.
@@ -730,7 +747,12 @@ html,body{margin:0;padding:0; height:100%;}
       const data = await apiList();
       if(data && data.error) throw new Error(data.error);
       if(data && data.entries){
-        let entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
+        let entries = data.entries.map(e=>({
+          ...e,
+          amount:Number(e.amount),
+          date:normalizeDateStr(e.date),
+          time:normalizeTimeStr(e.time)
+        }));
         // Re-apply any in-flight edits/deletes/adds so they don't flicker
         // away while their request is still on the wire.
         entries = entries.filter(e=> !pendingDeletes.has(e.id));
