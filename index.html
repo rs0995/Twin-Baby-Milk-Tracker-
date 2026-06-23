@@ -1,0 +1,874 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap');
+
+:root{
+  --ink:#532C3B;
+  --ink-soft:#A6798C;
+  --bg:#FCEAF0;
+  --surface:#FFFFFF;
+  --line:#F6D9E3;
+  --brand:#E0628B;
+  --brand-deep:#B8456A;
+  --p1:#EC6F91;       /* Twin A accent - rose pink */
+  --p1-deep:#C24768;
+  --p2:#8C7FC2;        /* Twin B accent - soft lavender */
+  --p2-deep:#675999;
+  --danger:#D9637A;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+
+#hydration-app{
+  font-family:'Inter',sans-serif;
+  color:var(--ink);
+  background:var(--bg);
+  min-height:100vh;
+  max-width:430px;
+  margin:0 auto;
+  padding:env(safe-area-inset-top,18px) 16px calc(env(safe-area-inset-bottom,18px) + 16px);
+  position:relative;
+}
+
+.h-title{
+  font-family:'Outfit',sans-serif;
+  font-weight:800;
+  font-size:25px;
+  letter-spacing:-0.02em;
+  margin:6px 2px 14px;
+  display:flex;
+  align-items:baseline;
+  gap:8px;
+}
+.h-title span{font-size:13px;font-weight:500;color:var(--ink-soft);font-family:'Inter',sans-serif;}
+
+/* Segmented toggle */
+.segment{
+  display:flex;
+  background:var(--surface);
+  border-radius:14px;
+  padding:4px;
+  gap:4px;
+  box-shadow:0 1px 2px rgba(83,44,59,0.06), 0 8px 20px -10px rgba(83,44,59,0.12);
+  margin-bottom:16px;
+}
+.segment button{
+  flex:1;
+  border:none;
+  background:transparent;
+  padding:10px 6px;
+  border-radius:10px;
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:14px;
+  color:var(--ink-soft);
+  cursor:pointer;
+  transition:background .25s, color .25s;
+}
+.segment button.active.p1{background:var(--p1); color:#fff;}
+.segment button.active.p2{background:var(--p2); color:#fff;}
+
+/* Bottles row */
+.glasses{
+  display:flex;
+  gap:12px;
+  margin-bottom:18px;
+}
+.glass-card{
+  flex:1;
+  background:var(--surface);
+  border-radius:20px;
+  padding:14px 12px 12px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  box-shadow:0 1px 2px rgba(83,44,59,0.05), 0 10px 24px -14px rgba(83,44,59,0.18);
+  transition:transform .25s, opacity .25s;
+  opacity:0.6;
+  transform:scale(0.96);
+}
+.glass-card.active{opacity:1; transform:scale(1);}
+
+.glass-name{
+  font-size:13px;
+  font-weight:600;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  gap:4px;
+  cursor:pointer;
+  margin-bottom:10px;
+}
+.glass-name .dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.glass-card.p1 .glass-name .dot{background:var(--p1);}
+.glass-card.p2 .glass-name .dot{background:var(--p2);}
+.glass-name svg{width:11px;height:11px;opacity:.5;}
+
+/* bottle shape: neck + body */
+.bottle-wrap{position:relative; width:54px; height:96px; margin-bottom:10px;}
+.bottle-neck{
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:18px; height:12px;
+  background:#FBF4F6;
+  border:2.5px solid var(--line);
+  border-bottom:none;
+  border-radius:5px 5px 0 0;
+}
+.bottle-cap{
+  position:absolute; top:-7px; left:50%; transform:translateX(-50%);
+  width:24px; height:7px;
+  background:var(--line);
+  border-radius:3px;
+}
+.glass-shape{
+  position:absolute;
+  top:11px; left:0;
+  width:54px;
+  height:85px;
+  border-radius:10px 10px 20px 20px;
+  border:2.5px solid var(--line);
+  overflow:hidden;
+  background:#FBF4F6;
+}
+.glass-fill{
+  position:absolute;
+  bottom:0; left:0; right:0;
+  height:0%;
+  transition:height .5s cubic-bezier(.3,.9,.4,1);
+}
+.glass-card.p1 .glass-fill{background:linear-gradient(180deg,#FFD9E4,var(--p1));}
+.glass-card.p2 .glass-fill{background:linear-gradient(180deg,#DCD6F0,var(--p2));}
+.glass-fill::before{
+  content:'';
+  position:absolute;
+  top:-3px; left:-10%;
+  width:120%; height:8px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.55);
+  animation:bob 2.6s ease-in-out infinite;
+}
+@keyframes bob{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(2px);}
+}
+
+.glass-amount{font-family:'Outfit',sans-serif;font-weight:700;font-size:18px;}
+.glass-goal{font-size:11px;color:var(--ink-soft);margin-top:1px;cursor:pointer;}
+
+/* Quick add */
+.section-label{
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-soft);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  margin:4px 2px 10px;
+}
+.quickgrid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-bottom:14px;
+}
+.qbtn{
+  border:none;
+  border-radius:16px;
+  padding:14px 0;
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
+  font-size:16px;
+  cursor:pointer;
+  background:var(--surface);
+  color:var(--ink);
+  border:1.5px solid var(--line);
+  transition:transform .12s, background .2s, color .2s, border-color .2s;
+}
+.qbtn:active{transform:scale(0.94);}
+.qbtn.p1-active{border-color:var(--p1); color:var(--p1-deep);}
+.qbtn.p2-active{border-color:var(--p2); color:var(--p2-deep);}
+.qbtn span{display:block;font-size:10px;font-weight:500;color:var(--ink-soft);margin-top:1px;}
+
+.customrow{
+  display:flex;
+  gap:8px;
+  margin-bottom:24px;
+}
+.customrow input{
+  flex:1;
+  border:1.5px solid var(--line);
+  border-radius:14px;
+  padding:12px 14px;
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+  background:var(--surface);
+  color:var(--ink);
+  min-width:0;
+}
+.customrow input:focus{outline:2px solid var(--brand); outline-offset:1px;}
+.customrow button{
+  border:none;
+  border-radius:14px;
+  padding:0 20px;
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  color:#fff;
+  cursor:pointer;
+}
+.customrow button.p1{background:var(--p1);}
+.customrow button.p2{background:var(--p2);}
+
+/* Log */
+.log-list{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:10px;
+}
+.log-row{
+  background:var(--surface);
+  border-radius:14px;
+  padding:11px 12px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  box-shadow:0 1px 2px rgba(83,44,59,0.04);
+}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.log-dot.p1{background:var(--p1);}
+.log-dot.p2{background:var(--p2);}
+.log-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;
+  color:var(--ink-soft);
+  width:46px;
+  flex-shrink:0;
+}
+.log-amount{
+  font-family:'Outfit',sans-serif;
+  font-weight:600;
+  font-size:15px;
+  flex:1;
+}
+.log-actions{display:flex; gap:6px;}
+.icon-btn{
+  border:none;
+  background:#FBEEF2;
+  width:32px;height:32px;
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  color:var(--ink-soft);
+}
+.icon-btn:active{transform:scale(0.92);}
+.icon-btn.del{color:var(--danger);}
+
+.empty-state{
+  text-align:center;
+  padding:30px 10px;
+  color:var(--ink-soft);
+  font-size:14px;
+}
+
+/* Edit sheet */
+.sheet-overlay{
+  position:fixed; inset:0;
+  background:rgba(83,44,59,0.32);
+  display:flex; align-items:flex-end; justify-content:center;
+  z-index:50;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s;
+}
+.sheet-overlay.show{opacity:1; pointer-events:auto;}
+.sheet{
+  width:100%; max-width:430px;
+  background:var(--surface);
+  border-radius:24px 24px 0 0;
+  padding:20px 20px calc(env(safe-area-inset-bottom,18px) + 20px);
+  transform:translateY(100%);
+  transition:transform .3s cubic-bezier(.3,.9,.3,1);
+}
+.sheet-overlay.show .sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--line);border-radius:3px;margin:0 auto 16px;}
+.sheet h3{font-family:'Outfit',sans-serif;font-size:17px;margin:0 0 16px;}
+.field-label{font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;}
+.field{margin-bottom:14px;}
+.field input{
+  width:100%;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  padding:11px 13px;
+  font-family:'Inter',sans-serif;
+  font-size:15px;
+}
+.field input:focus{outline:2px solid var(--brand); outline-offset:1px;}
+.sheet-actions{display:flex; gap:10px; margin-top:6px;}
+.sheet-actions button{
+  flex:1;
+  border:none;
+  border-radius:13px;
+  padding:13px 0;
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  cursor:pointer;
+}
+.sheet-actions .save{background:var(--brand); color:#fff;}
+.sheet-actions .cancel{background:#FBEEF2; color:var(--ink-soft);}
+.sheet-actions .delete{background:#FBE3E8; color:var(--danger);}
+
+.sync-note{
+  text-align:center;
+  font-size:11px;
+  color:var(--ink-soft);
+  margin-top:6px;
+}
+
+/* Interval selector */
+.interval-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin:4px 2px 10px;
+}
+.interval-row .section-label{margin:0;}
+.interval-pills{
+  display:flex;
+  background:var(--surface);
+  border-radius:11px;
+  padding:3px;
+  gap:2px;
+  box-shadow:0 1px 2px rgba(83,44,59,0.05);
+}
+.interval-pills button{
+  border:none;
+  background:transparent;
+  padding:6px 9px;
+  border-radius:8px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  font-weight:500;
+  color:var(--ink-soft);
+  cursor:pointer;
+}
+.interval-pills button.active{background:var(--brand); color:#fff;}
+
+.date-select{
+  border:none;
+  background:var(--surface);
+  border-radius:11px;
+  padding:8px 10px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  font-weight:500;
+  color:var(--ink);
+  box-shadow:0 1px 2px rgba(83,44,59,0.05);
+  -webkit-appearance:none;
+  appearance:none;
+  cursor:pointer;
+}
+.date-select:focus{outline:2px solid var(--brand); outline-offset:1px;}
+
+/* Average per interval card */
+.avg-card{
+  display:flex;
+  background:var(--surface);
+  border-radius:16px;
+  box-shadow:0 1px 2px rgba(83,44,59,0.05), 0 10px 24px -14px rgba(83,44,59,0.16);
+  margin-bottom:18px;
+  overflow:hidden;
+}
+.avg-stat{
+  flex:1;
+  padding:14px 10px;
+  text-align:center;
+  border-right:1px solid var(--line);
+}
+.avg-stat:last-child{border-right:none;}
+.avg-stat .avg-name{
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink-soft);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  margin-bottom:6px;
+}
+.avg-stat .avg-name .dot{width:6px;height:6px;border-radius:50%;}
+.avg-stat.p1 .avg-name .dot{background:var(--p1);}
+.avg-stat.p2 .avg-name .dot{background:var(--p2);}
+.avg-stat .avg-value{
+  font-family:'Outfit',sans-serif;
+  font-weight:700;
+  font-size:21px;
+}
+.avg-stat .avg-value span{font-size:12px; font-weight:500; color:var(--ink-soft);}
+.avg-stat .avg-sub{font-size:10.5px; color:var(--ink-soft); margin-top:2px;}
+
+.pattern-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-bottom:22px;
+}
+.pattern-card{
+  background:var(--surface);
+  border-radius:14px;
+  padding:9px 6px 10px;
+  text-align:center;
+  box-shadow:0 1px 2px rgba(83,44,59,0.04);
+}
+.pattern-time{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  color:var(--ink-soft);
+  margin-bottom:7px;
+}
+.pattern-stat{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  font-family:'Outfit',sans-serif;
+  font-weight:600;
+  font-size:12.5px;
+  margin:2px 0;
+}
+.pattern-stat .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.pattern-stat.p1 .dot{background:var(--p1);}
+.pattern-stat.p2 .dot{background:var(--p2);}
+.pattern-stat.zero{color:var(--ink-soft); font-weight:500; opacity:.55;}
+.pattern-note{
+  font-size:11px;
+  color:var(--ink-soft);
+  margin:-4px 2px 12px;
+}
+</style>
+
+<div id="hydration-app">
+  <div class="h-title">Milk Tracker <span id="syncStatus">syncing…</span></div>
+
+  <div class="segment" id="segment"></div>
+
+  <div class="glasses" id="glasses"></div>
+
+  <div class="section-label" id="quickLabel">Quick add</div>
+  <div class="quickgrid" id="quickgrid"></div>
+
+  <div class="customrow">
+    <input type="number" id="customAmount" placeholder="Custom amount (ml)" inputmode="numeric" min="1">
+    <button id="customAddBtn">Add</button>
+  </div>
+
+  <div class="section-label">Today's feeds</div>
+  <div class="log-list" id="logList"></div>
+
+  <div class="interval-row">
+    <div class="section-label">Average intake per</div>
+    <div class="interval-pills" id="intervalPills"></div>
+  </div>
+  <div class="avg-card" id="avgCard"></div>
+
+  <div class="interval-row">
+    <div class="section-label">Daily intake</div>
+    <select class="date-select" id="dateSelect"></select>
+  </div>
+  <div class="pattern-note" id="patternNote"></div>
+  <div class="pattern-grid" id="patternGrid"></div>
+
+  <div class="sync-note">Shared log — visible to both parents on this device's storage.</div>
+</div>
+
+<div class="sheet-overlay" id="sheetOverlay">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Edit feed</h3>
+    <div class="field">
+      <div class="field-label">Amount (ml)</div>
+      <input type="number" id="editAmount" min="1" inputmode="numeric">
+    </div>
+    <div class="field">
+      <div class="field-label">Time</div>
+      <input type="time" id="editTime">
+    </div>
+    <div class="sheet-actions">
+      <button class="cancel" id="cancelEdit">Cancel</button>
+      <button class="delete" id="deleteEntry">Delete</button>
+      <button class="save" id="saveEdit">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const EDIT_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>';
+  const TRASH_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>';
+  const PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21l3.6-1L19 8.6a2 2 0 000-2.8L17.2 4a2 2 0 00-2.8 0L2 16.4V21z"/></svg>';
+
+  const QUICK_AMOUNTS = [10,15,20,25,30,40];
+  const INTERVAL_OPTIONS = [2,4,6,12,24];
+  let avgIntervalHours = 2;
+  let selectedDate = null; // set on first render to today
+
+  let state = {
+    names: {p1:'Twin A', p2:'Twin B'},
+    goals: {p1:700, p2:700},
+    entries: [],
+    active: 'p1'
+  };
+
+  function todayStr(){
+    const d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function nowHHMM(){
+    const d = new Date();
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  }
+  function setSyncStatus(text){
+    const el = document.getElementById('syncStatus');
+    if(el) el.textContent = text;
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycby0o0rc7LsB_0bWGcL6eoFpeM8xITSJx04tVCWAFRJ_X06mNbXzGDteGUrXW7HeDqPpUA/exec';
+
+  async function apiList(){
+    const res = await fetch(GAS_URL+'?action=list');
+    if(!res.ok) throw new Error('list failed');
+    return res.json();
+  }
+  async function apiPost(payload){
+    const res = await fetch(GAS_URL, {
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('post failed');
+    return res.json();
+  }
+
+  async function loadAll(){
+    setSyncStatus('syncing…');
+    try{
+      const data = await apiList();
+      if(data && data.entries) state.entries = data.entries.map(e=>({...e, amount:Number(e.amount)}));
+      if(data && data.names) state.names = data.names;
+      if(data && data.goals) state.goals = {p1:Number(data.goals.p1)||700, p2:Number(data.goals.p2)||700};
+      setSyncStatus('synced');
+    }catch(err){
+      setSyncStatus('offline — showing last known data');
+    }
+    render();
+  }
+
+  // Periodically refresh so both parents see each other's entries
+  setInterval(()=>{ loadAll(); }, 20000);
+
+  async function apiAddEntry(entry){
+    try{
+      setSyncStatus('saving…');
+      await apiPost({action:'add', entry});
+      setSyncStatus('synced');
+    }catch(e){ setSyncStatus('save failed — check connection'); }
+  }
+  async function apiEditEntry(id, amount, time){
+    try{
+      setSyncStatus('saving…');
+      await apiPost({action:'edit', id, amount, time});
+      setSyncStatus('synced');
+    }catch(e){ setSyncStatus('save failed — check connection'); }
+  }
+  async function apiDeleteEntry(id){
+    try{
+      setSyncStatus('saving…');
+      await apiPost({action:'delete', id});
+      setSyncStatus('synced');
+    }catch(e){ setSyncStatus('save failed — check connection'); }
+  }
+  async function apiSetName(person, name){
+    try{ await apiPost({action:'setName', person, name}); }catch(e){}
+  }
+  async function apiSetGoal(person, goal){
+    try{ await apiPost({action:'setGoal', person, goal}); }catch(e){}
+  }
+
+  function todayEntries(){
+    const t = todayStr();
+    return state.entries.filter(e=>e.date===t);
+  }
+  function totalFor(person){
+    return todayEntries().filter(e=>e.person===person).reduce((s,e)=>s+e.amount,0);
+  }
+
+  function renderSegment(){
+    const seg = document.getElementById('segment');
+    seg.innerHTML = `
+      <button class="${state.active==='p1'?'active p1':''}" data-p="p1">${escapeHtml(state.names.p1)}</button>
+      <button class="${state.active==='p2'?'active p2':''}" data-p="p2">${escapeHtml(state.names.p2)}</button>
+    `;
+    seg.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{ state.active = b.dataset.p; render(); });
+    });
+  }
+
+  function renderGlasses(){
+    const wrap = document.getElementById('glasses');
+    wrap.innerHTML = ['p1','p2'].map(p=>{
+      const total = totalFor(p);
+      const goal = state.goals[p];
+      const pct = Math.max(0, Math.min(100, Math.round((total/goal)*100)));
+      return `
+        <div class="glass-card ${p} ${state.active===p?'active':''}" data-p="${p}">
+          <div class="glass-name" data-rename="${p}">${escapeHtml(state.names[p])} ${PENCIL_SVG}</div>
+          <div class="bottle-wrap">
+            <div class="bottle-cap"></div>
+            <div class="bottle-neck"></div>
+            <div class="glass-shape"><div class="glass-fill" style="height:${pct}%"></div></div>
+          </div>
+          <div class="glass-amount">${total} ml</div>
+        </div>
+      `;
+    }).join('');
+
+    wrap.querySelectorAll('.glass-card').forEach(c=>{
+      c.addEventListener('click', (ev)=>{
+        if(ev.target.closest('[data-rename]')) return;
+        state.active = c.dataset.p; render();
+      });
+    });
+    wrap.querySelectorAll('[data-rename]').forEach(el=>{
+      el.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        const p = el.dataset.rename;
+        const val = prompt('Rename', state.names[p]);
+        if(val && val.trim()){ state.names[p] = val.trim().slice(0,20); apiSetName(p, state.names[p]); render(); }
+      });
+    });
+  }
+
+  function renderQuickgrid(){
+    document.getElementById('quickLabel').textContent = 'Quick add for ' + state.names[state.active];
+    const grid = document.getElementById('quickgrid');
+    const cls = state.active==='p1' ? 'p1-active' : 'p2-active';
+    grid.innerHTML = QUICK_AMOUNTS.map(a=>`<button class="qbtn ${cls}" data-amt="${a}">${a}<span>ml</span></button>`).join('');
+    grid.querySelectorAll('.qbtn').forEach(b=>{
+      b.addEventListener('click', ()=> addEntry(parseInt(b.dataset.amt,10)));
+    });
+
+    const addBtn = document.getElementById('customAddBtn');
+    addBtn.className = state.active;
+    addBtn.onclick = ()=>{
+      const input = document.getElementById('customAmount');
+      const val = parseInt(input.value,10);
+      if(val && val>0){ addEntry(val); input.value=''; }
+    };
+  }
+
+  function renderLog(){
+    const list = document.getElementById('logList');
+    const entries = todayEntries().slice().sort((a,b)=> b.time.localeCompare(a.time));
+    if(entries.length===0){
+      list.innerHTML = `<div class="empty-state">No feeds logged yet today. Tap a quick-add button above.</div>`;
+      return;
+    }
+    list.innerHTML = entries.map(e=>`
+      <div class="log-row" data-id="${e.id}">
+        <div class="log-dot ${e.person}"></div>
+        <div class="log-time">${e.time}</div>
+        <div class="log-amount">${e.amount} ml <span style="font-weight:400;color:var(--ink-soft);font-size:12px;">· ${escapeHtml(state.names[e.person])}</span></div>
+        <div class="log-actions">
+          <button class="icon-btn edit" aria-label="Edit">${EDIT_SVG}</button>
+          <button class="icon-btn del" aria-label="Delete">${TRASH_SVG}</button>
+        </div>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.log-row').forEach(row=>{
+      const id = row.dataset.id;
+      row.querySelector('.edit').addEventListener('click', ()=> openEditSheet(id));
+      row.querySelector('.del').addEventListener('click', ()=> {
+        state.entries = state.entries.filter(e=>e.id!==id);
+        apiDeleteEntry(id); render();
+      });
+    });
+  }
+
+  function blockLabel(i, interval){
+    const startH = i*interval, endH = startH+interval;
+    function fmt(h){
+      const ampm = (h%24) < 12 ? 'AM':'PM';
+      let hh = h%24;
+      if(hh===0) hh=12; else if(hh>12) hh-=12;
+      return hh+ampm;
+    }
+    if(interval===24) return 'Full day';
+    return fmt(startH)+'–'+fmt(endH===24?0:endH);
+  }
+
+  function computeBlockTotals(date, interval){
+    const numBlocks = 24/interval;
+    const sums = {p1:Array(numBlocks).fill(0), p2:Array(numBlocks).fill(0)};
+    state.entries.forEach(e=>{
+      if(e.date !== date) return;
+      const h = parseInt((e.time||'0:0').split(':')[0],10) || 0;
+      const block = Math.min(numBlocks-1, Math.max(0, Math.floor(h/interval)));
+      if(sums[e.person]) sums[e.person][block] += e.amount;
+    });
+    return {sums, numBlocks};
+  }
+
+  function renderIntervalPills(){
+    const wrap = document.getElementById('intervalPills');
+    wrap.innerHTML = INTERVAL_OPTIONS.map(h=>
+      `<button class="${avgIntervalHours===h?'active':''}" data-h="${h}">${h}h</button>`
+    ).join('');
+    wrap.querySelectorAll('button').forEach(b=>{
+      b.addEventListener('click', ()=>{
+        avgIntervalHours = parseInt(b.dataset.h,10);
+        renderIntervalPills();
+        renderAvgCard();
+      });
+    });
+  }
+
+  function renderAvgCard(){
+    const wrap = document.getElementById('avgCard');
+    const numBlocks = 24/avgIntervalHours;
+    const stats = ['p1','p2'].map(p=>{
+      const daysSeen = new Set();
+      let total = 0;
+      state.entries.forEach(e=>{
+        if(e.person===p){ total += e.amount; daysSeen.add(e.date); }
+      });
+      const dayCount = Math.max(1, daysSeen.size);
+      const dailyAvg = total/dayCount;
+      const perInterval = Math.round(dailyAvg/numBlocks);
+      return `
+        <div class="avg-stat ${p}">
+          <div class="avg-name"><span class="dot"></span>${escapeHtml(state.names[p])}</div>
+          <div class="avg-value">${perInterval}<span> ml</span></div>
+          <div class="avg-sub">avg per ${avgIntervalHours}h${daysSeen.size>1?' · '+daysSeen.size+' days':''}</div>
+        </div>
+      `;
+    }).join('');
+    wrap.innerHTML = stats;
+  }
+
+  function formatDateLabel(dateStr){
+    const today = todayStr();
+    if(dateStr === today) return 'Today';
+    const d = new Date(dateStr+'T00:00:00');
+    const yest = new Date();
+    yest.setDate(yest.getDate()-1);
+    const yestStr = yest.getFullYear()+'-'+String(yest.getMonth()+1).padStart(2,'0')+'-'+String(yest.getDate()).padStart(2,'0');
+    if(dateStr === yestStr) return 'Yesterday';
+    return d.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'});
+  }
+
+  function renderDateSelect(){
+    const sel = document.getElementById('dateSelect');
+    const today = todayStr();
+    const dates = new Set([today]);
+    state.entries.forEach(e=> dates.add(e.date));
+    const sorted = Array.from(dates).sort().reverse();
+    if(!selectedDate || !dates.has(selectedDate)) selectedDate = today;
+
+    sel.innerHTML = sorted.map(d=>
+      `<option value="${d}" ${d===selectedDate?'selected':''}>${formatDateLabel(d)}</option>`
+    ).join('');
+    sel.onchange = ()=>{ selectedDate = sel.value; renderPatterns(); };
+  }
+
+  function renderPatterns(){
+    const grid = document.getElementById('patternGrid');
+    const note = document.getElementById('patternNote');
+    const date = selectedDate || todayStr();
+    const {sums, numBlocks} = computeBlockTotals(date, 2);
+    note.textContent = `Total ml logged in each 2-hour window on ${formatDateLabel(date)}.`;
+
+    grid.innerHTML = Array.from({length:numBlocks}).map((_,i)=>{
+      const a1 = sums.p1[i], a2 = sums.p2[i];
+      return `
+        <div class="pattern-card">
+          <div class="pattern-time">${blockLabel(i, 2)}</div>
+          <div class="pattern-stat p1 ${a1===0?'zero':''}"><span class="dot"></span>${a1} ml</div>
+          <div class="pattern-stat p2 ${a2===0?'zero':''}"><span class="dot"></span>${a2} ml</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function addEntry(amount){
+    const e = {
+      id: Date.now().toString(36)+Math.random().toString(36).slice(2,7),
+      person: state.active,
+      amount: amount,
+      date: todayStr(),
+      time: nowHHMM()
+    };
+    state.entries.push(e);
+    apiAddEntry(e);
+    render();
+  }
+
+  let editingId = null;
+  function openEditSheet(id){
+    const e = state.entries.find(x=>x.id===id);
+    if(!e) return;
+    editingId = id;
+    document.getElementById('editAmount').value = e.amount;
+    document.getElementById('editTime').value = e.time;
+    document.getElementById('sheetOverlay').classList.add('show');
+  }
+  function closeSheet(){
+    document.getElementById('sheetOverlay').classList.remove('show');
+    editingId = null;
+  }
+
+  document.getElementById('cancelEdit').addEventListener('click', closeSheet);
+  document.getElementById('sheetOverlay').addEventListener('click', (ev)=>{
+    if(ev.target.id === 'sheetOverlay') closeSheet();
+  });
+  document.getElementById('saveEdit').addEventListener('click', ()=>{
+    if(!editingId) return;
+    const e = state.entries.find(x=>x.id===editingId);
+    if(!e) return;
+    const amt = parseInt(document.getElementById('editAmount').value,10);
+    const time = document.getElementById('editTime').value;
+    if(amt && amt>0) e.amount = amt;
+    if(time) e.time = time;
+    apiEditEntry(e.id, e.amount, e.time);
+    closeSheet();
+    render();
+  });
+  document.getElementById('deleteEntry').addEventListener('click', ()=>{
+    if(!editingId) return;
+    const id = editingId;
+    state.entries = state.entries.filter(x=>x.id!==id);
+    apiDeleteEntry(id);
+    closeSheet();
+    render();
+  });
+
+  document.getElementById('customAmount').addEventListener('keydown', (ev)=>{
+    if(ev.key==='Enter'){ document.getElementById('customAddBtn').click(); }
+  });
+
+  function render(){
+    renderSegment();
+    renderGlasses();
+    renderQuickgrid();
+    renderLog();
+    renderIntervalPills();
+    renderAvgCard();
+    renderDateSelect();
+    renderPatterns();
+  }
+
+  loadAll();
+})();
+</script>
