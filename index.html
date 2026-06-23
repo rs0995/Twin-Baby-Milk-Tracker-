@@ -738,7 +738,14 @@ html,body{margin:0;padding:0; height:100%;}
         pendingAdds.forEach((entry, id)=>{
           if(!entries.find(e=>e.id===id)) entries.push(entry);
         });
-        state.entries = entries;
+        // Defensive: if the server suddenly returns fewer entries than we
+        // already know about locally, and nothing is actually pending a
+        // delete, treat it as a bad/partial read rather than trusting it —
+        // a flaky fetch should never be allowed to erase saved data.
+        const looksIncomplete = entries.length < state.entries.length && pendingDeletes.size===0;
+        if(!looksIncomplete){
+          state.entries = entries;
+        }
       }
       if(data && data.names) state.names = data.names;
       if(data && data.goals) state.goals = {p1:Number(data.goals.p1)||700, p2:Number(data.goals.p2)||700};
@@ -768,8 +775,8 @@ html,body{margin:0;padding:0; height:100%;}
     }catch(e){
       setSyncStatus('save failed — check connection');
     }finally{
+      await loadAll();
       pendingAdds.delete(entry.id);
-      loadAll();
     }
   }
   async function apiEditEntry(id, amount, time){
@@ -781,8 +788,8 @@ html,body{margin:0;padding:0; height:100%;}
     }catch(e){
       setSyncStatus('save failed — check connection');
     }finally{
+      await loadAll();
       pendingEdits.delete(id);
-      loadAll();
     }
   }
   async function apiDeleteEntry(id){
@@ -794,8 +801,8 @@ html,body{margin:0;padding:0; height:100%;}
     }catch(e){
       setSyncStatus('save failed — check connection');
     }finally{
+      await loadAll();
       pendingDeletes.delete(id);
-      loadAll();
     }
   }
   async function apiSetName(person, name){
